@@ -6,6 +6,9 @@
 #include <iostream>
 #include "camera.h"
 
+// author:  tosta
+// date:    2016-10-25
+
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
