@@ -1,243 +1,206 @@
-//// exmple from https://capnramses.github.io/opengl/hellotriangle.html ///////////////////
-
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "linmath.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include "camera.h"
 
-// author:  tosta
-// date:    2016-10-25
+#include <cstdlib> // for random numbers
 
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static struct
 {
-    std::cout<<"Key: "<<key<<"Action: "<<action<<std::endl;
+public:
+    float x, y;
+    float r, g, b;
+} vertices[3] =
+{
+    { -0.6f, -0.4f, 1.f, 0.f, 0.f },
+    {  0.6f, -0.4f, 0.f, 1.f, 0.f },
+    {   0.f,  0.6f, 0.f, 0.f, 1.f }
+};
 
-    if(key==GLFW_KEY_Q or key==GLFW_KEY_ESCAPE)
-    {
-        glfwDestroyWindow( window );
-    }
+static const char* vertex_shader_text =
+"uniform float factor;\n"
+"uniform mat4 MVP;\n"
+"attribute vec3 vCol;\n"
+"attribute vec2 vPos;\n"
+"varying vec3 color;\n"
+"void main()\n"
+"{\n"
+"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
+// "    color = vCol;\n"
+"    color = vec3(vCol[0]*factor, vCol[1]*factor, vCol[2]*factor );\n"
+"}\n";
+
+
+static const char* fragment_shader_text =
+"varying vec3 color;\n"
+"void main()\n"
+"{\n"
+"    gl_FragColor = vec4(color, 1.0);\n"
+"}\n";
+
+
+#if 0
+static const char* vertex_shader_text_old =
+"uniform mat4 MVP;\n"
+"attribute vec3 vCol;\n"
+"attribute vec2 vPos;\n"
+"varying vec3 color;\n"
+"void main()\n"
+"{\n"
+"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
+"    color = vCol * factor;\n"
+"}\n";
+
+
+static const char* fragment_shader_text_old =
+"varying vec3 color;\n"
+"void main()\n"
+"{\n"
+"    gl_FragColor = vec4(color, 1.0);\n"
+"}\n";
+#endif
+
+
+
+static void error_callback(int error, const char* description)
+{
+    fprintf(stderr, "Error: %s\n", description);
 }
 
 
-static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    std::cout << "Position: " << xpos << "|" <<ypos <<std::endl;
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS || key == GLFW_KEY_Q && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, 1);
+        // glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 
+int main(void)
+{
+    GLFWwindow* window;
+    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+    GLint mvp_location, vpos_location, vcol_location;
 
-
-// int main(int argc, char** argv)
-int main() {
-    // start GL context and O/S window using the GLFW helper library
+    glfwSetErrorCallback(error_callback);
     if (!glfwInit())
-    {
-        fprintf(stderr, "ERROR: could not init GLFW3\n");
-        return 1;
-    }
-
-
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Hello Triangle", NULL, NULL);
-
+        exit(EXIT_FAILURE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     if (!window)
     {
-        fprintf(stderr, "ERROR: could not open window with GLFW3\n");
         glfwTerminate();
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
-    glfwMakeContextCurrent(window);
-
-    // start GLEW extension handler
-        glewExperimental = GL_TRUE;
-    glewInit();
-
-    // get version info
-    const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
-    const GLubyte* version = glGetString(GL_VERSION); // version as a string
-    printf("Renderer: %s\n", renderer);
-    printf("OpenGL version supported %s\n", version);
-
-    // tell GL to only draw onto a pixel if the shape is closer to the viewer
-    glEnable(GL_DEPTH_TEST); // enable depth-testing
-    glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-
-
-
-    // input handling
     glfwSetKeyCallback(window, key_callback);
+    glfwMakeContextCurrent(window);
+    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+    glfwSwapInterval(1);
 
-    //
-    glfwSetCursorPosCallback(window, cursor_position_callback);
+    // NOTE: OpenGL error checks have been omitted for brevity
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+    glCompileShader(vertex_shader);
+
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+    glCompileShader(fragment_shader);
+
+    program = glCreateProgram();
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
+    glLinkProgram(program);
+
+    mvp_location = glGetUniformLocation(program, "MVP");
+    vpos_location = glGetAttribLocation(program, "vPos");
+    vcol_location = glGetAttribLocation(program, "vCol");
+
+    GLint fact_location;
+    fact_location = glGetUniformLocation(program, "factor");
+    glUniform1f(fact_location, 1.);
+
+    std::cout << fact_location << std::endl;
+
+    glEnableVertexAttribArray(vpos_location);
+    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
+                          sizeof(float) * 5, (void*) 0);
+
+    glEnableVertexAttribArray(vcol_location);
+    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(float) * 5, (void*) (sizeof(float) * 2));
+
+    // glEnableVertexAttribArray(fact_location);
 
 
-    while(!glfwWindowShouldClose(window))
+    GLfloat color_factors[9];
+    
+    mat4x4 m, p, mvp;
+
+    while (!glfwWindowShouldClose(window))
     {
-        // wipe the drawing surface clear
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        float ratio;
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        ratio = width / (float) height;
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT);
+        mat4x4_identity(m);
+        mat4x4_rotate_Y(m, m, (float) glfwGetTime());
+        mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+        mat4x4_mul(mvp, p, m);
 
-        // glUseProgram(shader_programme);
-        // glBindVertexArray(vao);
-        // // draw points 0-3 from the currently bound VAO with current in-use shader
+
+        #if 1
+        glUseProgram(program);
+
+        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+
+        float f;
+        f = (float)( std::rand() / (float)(RAND_MAX) );
+
+        // std::cout << glfwGetTime() << std::endl;
+        glUniform1f(fact_location, f);
+
+        // let color jitter
+        for(int i=0;i<3;i++)
+        {
+            vertices[i].r = std::rand();
+            // vertices[i].g = std::rand();
+            vertices[i].b = std::rand();
+        }
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glDrawArrays(GL_LINE_LOOP, 0, 3);
+
+
+        #else
+        glLoadIdentity();
+        glRotatef(0.1,1,1,0);
+        glTranslatef(-0.1,0,0);
+        glPushMatrix();
         // glDrawArrays(GL_TRIANGLES, 0, 3);
-        // // update other events like input handling
 
-        glfwPollEvents();
-        // put the stuff we've been drawing onto the display
+        glBegin(GL_TRIANGLES);
+            glColor3f(1,0,0);
+            glVertex3f( 1,-1, 0);
+            glVertex3f(-1,-1, 0);  
+            glVertex3f( 0, 1, 0);
+        glEnd();
+        glPopMatrix();
+        #endif 
+
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
-
-    // close GL context and any other GLFW resources
+    glfwDestroyWindow(window);
     glfwTerminate();
-  return 0;
+    exit(EXIT_SUCCESS);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-////// Getting started example //////
-// #include <glad/glad.h>
-// #include <GLFW/glfw3.h>
-// #include "linmath.h"
-// #include <stdlib.h>
-// #include <stdio.h>
-
-// static const struct
-// {
-//     float x, y;
-//     float r, g, b;
-// } vertices[3] =
-// {
-//     { -0.6f, -0.4f, 1.f, 0.f, 0.f },
-//     {  0.6f, -0.4f, 0.f, 1.f, 0.f },
-//     {   0.f,  0.6f, 0.f, 0.f, 1.f }
-// };
-
-// static const char* vertex_shader_text =
-// "uniform mat4 MVP;\n"
-// "attribute vec3 vCol;\n"
-// "attribute vec2 vPos;\n"
-// "varying vec3 color;\n"
-// "void main()\n"
-// "{\n"
-// "    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-// "    color = vCol;\n"
-// "}\n";
-
-// static const char* fragment_shader_text =
-// "varying vec3 color;\n"
-// "void main()\n"
-// "{\n"
-// "    gl_FragColor = vec4(color, 1.0);\n"
-// "}\n";
-
-
-// static void error_callback(int error, const char* description)
-// {
-//     fprintf(stderr, "Error: %s\n", description);
-// }
-
-
-// static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-// {
-//     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-//         glfwSetWindowShouldClose(window, 1);
-//         // glfwSetWindowShouldClose(window, GLFW_TRUE);
-// }
-
-
-// int main(void)
-// {
-//     GLFWwindow* window;
-//     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-//     GLint mvp_location, vpos_location, vcol_location;
-
-//     glfwSetErrorCallback(error_callback);
-
-//     if (!glfwInit())
-//         exit(EXIT_FAILURE);
-
-//     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-//     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-//     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-//     if (!window)
-//     {
-//         glfwTerminate();
-//         exit(EXIT_FAILURE);
-//     }
-
-//     glfwSetKeyCallback(window, key_callback);
-//     glfwMakeContextCurrent(window);
-//      // gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-
-//     // glewInit();
-
-//     glfwSwapInterval(1);
-//     // NOTE: OpenGL error checks have been omitted for brevity
-//     glGenBuffers(1, &vertex_buffer);
-//     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-//     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-//     glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-//     glCompileShader(vertex_shader);
-//     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-//     glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-//     glCompileShader(fragment_shader);
-//     program = glCreateProgram();
-//     glAttachShader(program, vertex_shader);
-//     glAttachShader(program, fragment_shader);
-//     glLinkProgram(program);
-//     mvp_location = glGetUniformLocation(program, "MVP");
-//     vpos_location = glGetAttribLocation(program, "vPos");
-//     vcol_location = glGetAttribLocation(program, "vCol");
-//     glEnableVertexAttribArray(vpos_location);
-//     glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-//                           sizeof(float) * 5, (void*) 0);
-//     glEnableVertexAttribArray(vcol_location);
-//     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-//                           sizeof(float) * 5, (void*) (sizeof(float) * 2));
-//     while (!glfwWindowShouldClose(window))
-//     {
-//         float ratio;
-//         int width, height;
-//         mat4x4 m, p, mvp;
-//         glfwGetFramebufferSize(window, &width, &height);
-//         ratio = width / (float) height;
-//         glViewport(0, 0, width, height);
-//         glClear(GL_COLOR_BUFFER_BIT);
-//         mat4x4_identity(m);
-//         mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-//         mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-//         mat4x4_mul(mvp, p, m);
-//         glUseProgram(program);
-//         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-//         glDrawArrays(GL_TRIANGLES, 0, 3);
-//         glfwSwapBuffers(window);
-//         glfwPollEvents();
-//     }
-//     glfwDestroyWindow(window);
-//     glfwTerminate();
-//     exit(EXIT_SUCCESS);
-// }
-
-
-
-
-
-
