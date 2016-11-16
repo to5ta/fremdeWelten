@@ -10,112 +10,87 @@
 
 CCamera::CCamera()
 {
-    initCamera(glm::vec3(0,0,0), glm::vec3(0,0,-1));
+    initCamera(glm::vec3(0,0,0));
 }
-
 
 CCamera::CCamera(glm::vec3 pos)
 {
-
-    initCamera(pos, glm::vec3(0,0,-1));
+    initCamera(pos);
 }
 
-
-CCamera::CCamera(glm::vec3 pos, glm::vec3 dir)
-{
-    initCamera(pos, dir);
-}
-
-
-
-void CCamera::initCamera(glm::vec3 pos, glm::vec3 dir)
-{
-    projection_matrix   = glm::ortho(-1.f, 1.f, -1.f, 1.f, 0.1f, 100.f); //0.1f, 100.f);
-    // view_matrix         = glm::lookAt( pos, pos+dir, glm::vec3(0.f,1.f,0.f));
-
-    position = pos;
-    std::cout<< "\n----\nposition\n"<<glm::to_string(position) <<std::endl;
-    moveSpeed= 0.03f;
-    rotSpeed = 0.03f;
-
-    yaw_f = 0.f;
-    pitch_f = 0.f;
-
-    rotation_matrix = glm::mat4(1.f);
-
-    std::cout<<"View Matrix"<<glm::to_string(view_matrix) <<std::endl;
-
-    updateMatrizes();
-}
-
-
-
-// void CCamera::yawCamera(float d_yaw_f )
-// {
-//     glm::vec3 up = glm::vec3(0.f,1.f,0.f);
-//     view_matrix = glm::rotate( view_matrix, d_yaw_f, up );
-// }
-
-
-
-// void CCamera::pitchCamera(float d_pitch_f )
-// {
-//     glm::vec4 right = glm::vec4(1.f, 0.f,0.f,1.f);
-//     right = view_matrix * right;
-//     view_matrix = glm::rotate( view_matrix, d_pitch_f, glm::vec3(right.x,right.y,right.z) );
-// }
 
 
 void CCamera::yawCamera(float d_yaw_f )
 {
-    yaw_f += d_yaw_f;
+    yaw_f += d_yaw_f * rotSpeed;
     updateMatrizes();
 }
 
 
 void CCamera::pitchCamera(float d_pitch_f )
 {
-    pitch_f += d_pitch_f;
+    float newPitch = pitch_f + d_pitch_f * rotSpeed;
+
+    if(newPitch > 1.5707f)
+        newPitch = 1.5707f;
+    if(newPitch < -1.5707f)
+        newPitch = -1.5707f;
+
+    pitch_f = newPitch;
+
     updateMatrizes();
 }
 
 
 
+void CCamera::initCamera(glm::vec3 pos)
+{
+    projection_matrix   = glm::ortho(-1.f, 1.f, -1.f, 1.f, -20.f, 20.f); //0.1f, 100.f);
+    
+    direction   = glm::vec3(0.f, 0.f,-1.f);
+    up          = glm::vec3(0.f, 1.f, 0.f);
+    right       = glm::vec3(1.f, 0.f, 0.f);
+
+    position = pos;
+    moveSpeed= 0.03f;
+    rotSpeed = 0.005f;
+    yaw_f = -1.57079f;
+    pitch_f = 0.f;
+
+    updateMatrizes();
+}
+
+
+
+
 void CCamera::updateMatrizes( void )
 {
+    // yaw pitch pos might have changed
 
-    std::cout<<"\n----"<<std::endl;
+    direction.x = cos(pitch_f) * cos(yaw_f);
+    direction.y = sin(pitch_f);
+    direction.z = cos(pitch_f) * sin(yaw_f);
 
-    glm::mat4 pitch_matrix          = glm::rotate(glm::mat4(1.0f), pitch_f, glm::vec3(1.0f, 0.0f, 0.0f));
-    rotation_matrix                 = glm::rotate(pitch_matrix, yaw_f, glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 translation_matrix    = glm::translate(glm::mat4(1.0f), position);
-    
-    std::cout<< "\ntranslation_matrix\n"<<glm::to_string(translation_matrix) <<std::endl;
+    // direction.x = cos(yaw_f);
+    // direction.y = 0.f;
+    // direction.z = sin(yaw_f);
 
-    view_matrix                     = translation_matrix * rotation_matrix;
+    glm::vec3 up_global = glm::vec3(0.f,1.f,0.f); 
+    right               = glm::normalize(glm::cross(direction, up_global));
+    up                  = glm::cross(right, direction);
 
-    std::cout<< "\nrotation matrix\n"<<glm::to_string(rotation_matrix) <<std::endl;
-    std::cout<< "\nposition\n"<<glm::to_string(position) <<std::endl;
-    std::cout<< "\nview matrix\n"<<glm::to_string(view_matrix) <<std::endl;
-    std::cout<< "\nyaw_f: "<<yaw_f <<std::endl;
-    std::cout<< "\npitch_f: "<<pitch_f <<std::endl;
-
+    view_matrix = glm::lookAt( position, position+direction, up );
 
 
+    // std::cout<< "\nview matrix\n"<<glm::to_string(view_matrix) <<std::endl;
+    // std::cout<< "\nposition\n"<<glm::to_string(position) <<std::endl;
+    // std::cout<< "\nright\n"<<glm::to_string(right) <<std::endl;
+    // std::cout<< "\ndirection\n"<<glm::to_string(direction) <<std::endl;
+    // std::cout<< "\nup\n"<<glm::to_string(up) <<std::endl;
+    // std::cout<< "\nyaw_f: "<<yaw_f <<std::endl;
+    // std::cout<< "\npitch_f: "<<pitch_f <<std::endl;
 
-    // /// calc new rotation matrix
-    // rotation_matrix = glm::eulerAngleYXZ( yaw_f, pitch_f, 0.f );
 
-    // std::cout<< "\n----\nrotmat\n"<<glm::to_string(rotation_matrix) <<std::endl;
-
-    // float* rm = glm::value_ptr( rotation_matrix );
-    // float* p  = glm::value_ptr( position );
-
-    // /// recompose ViewMatrix from rm and p
-    // view_matrix = glm::mat4( rm[0], rm[1], rm[2], p[0],
-    //                          rm[3], rm[4], rm[5], p[1],
-    //                          rm[6], rm[7], rm[8], p[2],
-    //                          0.f,   0.f,   0.f,   1.f  );
 }
 
 
@@ -145,8 +120,11 @@ void CCamera::setOrtho( float ratio_f, float zNear_f, float zFar_f )
 
 void CCamera::moveLocal( glm::vec3 d_location )
 {
+
     // bring in our coordinate system
-    glm::vec4 d_loc = rotation_matrix * glm::vec4(d_location.x, d_location.y, d_location.z, 1.f);
+    glm::vec4 d_loc = view_matrix * glm::vec4(d_location.x, d_location.y, d_location.z, 0.f);
+    
+    std::cout<< "\nd_loc\n"<<glm::to_string(d_loc) <<std::endl;
 
     // scale with speed
     d_loc = d_loc * moveSpeed; 

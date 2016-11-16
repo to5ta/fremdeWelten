@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 
-
+#include <glm/gtx/string_cast.hpp> 
 #include "linmath.h"
 #include <glm/glm.hpp>
 #include <glm/mat4x4.hpp>
@@ -32,6 +32,10 @@
 
 CCamera* camera;
 
+
+GLfloat lastX = 0.f;
+GLfloat lastY = 0.f;
+bool firstMouse = false;
 
 
 
@@ -78,6 +82,35 @@ static void error_callback(int error, const char* description)
 }
 
 
+
+
+
+static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+
+    if(firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+  
+    GLfloat xoffset = xpos - lastX;
+    GLfloat yoffset = lastY - ypos; 
+    lastX = xpos;
+    lastY = ypos;
+
+    GLfloat sensitivity = 0.05;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    camera->yawCamera(-xoffset);
+    camera->pitchCamera(-yoffset);
+
+}  
+
+
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS || key == GLFW_KEY_Q && action == GLFW_PRESS)
@@ -116,8 +149,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     {
         camera->pitchCamera( 0.04f );
     }
-
-
 }
 
 
@@ -141,6 +172,7 @@ int main(void)
     GLint mvp_location, vpos_location, vcol_location;
 
     glfwSetErrorCallback(error_callback);
+
     if (!glfwInit())
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
@@ -152,12 +184,17 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-
+    // fullscreen stuff
+    GLFWmonitor* primary = glfwGetPrimaryMonitor();
+    // glfwSetWindowMonitor( window, primary, 0, 0, 1920, 1080, 60 );   
 
 
     initFremdeWelten();
 
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+
     glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
@@ -198,7 +235,7 @@ int main(void)
 
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(float) * 6, (void*) (sizeof(float) * 2));
+                          sizeof(float) * 6, (void*) (sizeof(float) * 3));
 
     // glEnableVertexAttribArray(fact_location);
 
@@ -226,11 +263,11 @@ int main(void)
         glUseProgram(program);
 
         // camera->yawCamera( 0.01f );
-        // camera->setPerspective(60.f, ratio, -0.1f, -100.f );
+        camera->setPerspective(0.4f, ratio, 0.1f, 100.f );
 
 
         vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
-        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
+        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
 
         // camera->printView();
         // camera->printVectors();
@@ -246,37 +283,50 @@ int main(void)
         // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
 
         /// own approach with glm math
-        m = glm::mat4(1.f);
+        // m = glm::mat4(1.f);
 
-        v = glm::rotate( m, (float) glfwGetTime(), glm::vec3( 0.f, 1.f, 0.f) );
-        v = glm::translate(v, glm::vec3(0,0,3));
+        // v = glm::mat4(1.f);
+        // // v = glm::rotate( v, (float) glfwGetTime()*0.2f, glm::vec3( 0.f, 1.f, 0.f) );
+        // v = glm::rotate( v, 3.141f, glm::vec3( 0.f, 1.f, 0.f) );
+        
+        // vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
+        
+        // v = glm::translate(v, glm::vec3(1,0,10));
+        
+        // p = glm::perspective( 45.f, ratio, 0.1f, 100.f );
+        // // p = glm::ortho( -ratio, ratio, -1.f, 1.f, -20.f, 20.f );
 
-        // p = glm::perspective( 60.f, 1.f/ratio, 0.1f, 100.f );
-        p = glm::ortho( -ratio, ratio, -1.f, 1.f, 10.f, -10.f );
-
-        mvp = p * v * m;
+        // mvp = p * v * m;
         // mvp = p * m;
-        glUniformMatrix4fv( mvp_location, 1, GL_FALSE, glm::value_ptr(mvp) );
+
+        // std::cout<< "cam mvp" << glm::to_string(camera->getViewProjectionMatrix()) << std::endl;
+        // std::cout<< "gen mvp" << glm::to_string(mvp) << std::endl;
+        // glUniformMatrix4fv( mvp_location, 1, GL_FALSE, glm::value_ptr(mvp) );
         
 
 
-
       
-        float f;
-        f = (float)( std::rand() / (float)(RAND_MAX) );
+        // float f;
+        // f = (float)( std::rand() / (float)(RAND_MAX) );
 
-        // std::cout << glfwGetTime() << std::endl;
-        glUniform1f(fact_location, f);
-
-        // let color jitter
-        for(int i=0;i<3;i++)
-        {
-            vertices[i].r = std::rand();
-            // vertices[i].g = std::rand();
-            vertices[i].b = std::rand();
-        }
+        // // std::cout << glfwGetTime() << std::endl;
+        glUniform1f(fact_location, 1.f);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        // glDrawArrays(GL_LINE_LOOP, 0, 3);
+
+        // // let color jitter
+        // for(int i=0;i<3;i++)
+        // {
+        //     vertices[i].r = std::rand();
+        //     // vertices[i].g = std::rand();
+        //     vertices[i].b = std::rand();
+        // }
+        // m = glm::rotate( m, (float) glfwGetTime()*2.f, glm::vec3( 1.f, 0.f, 0.f) );
+        // mvp = p * v * m;
+        // glUniformMatrix4fv( mvp_location, 1, GL_FALSE, glm::value_ptr(mvp) );
+        
+        // // glUniformMatrix4fv( mvp_location, 1, GL_FALSE, glm::value_ptr(mvp) );
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
+        // // glDrawArrays(GL_LINE_LOOP, 0, 3);
 
 
         #else
