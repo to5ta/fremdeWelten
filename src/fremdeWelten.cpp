@@ -1,38 +1,64 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+
+
 #include "linmath.h"
+#include <glm/glm.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 
+
 #include <cstdlib> // for random numbers
+
+#include <CShader.hpp>
+#include <camera.h>
+
+
+
+
+CCamera* camera;
+
+
 
 
 static struct
 {
 public:
-    float x, y;
+    float x, y, z;
     float r, g, b;
 } vertices[3] =
 {
-    { -0.6f, -0.4f, 1.f, 0.f, 0.f },
-    {  0.6f, -0.4f, 0.f, 1.f, 0.f },
-    {   0.f,  0.6f, 0.f, 0.f, 1.f }
+    { -0.6f, -0.4f, 0.f, 1.f, 0.f, 0.f },
+    {  0.6f, -0.4f, 0.f, 0.f, 1.f, 0.f },
+    {   0.f,  0.6f, 0.f, 0.f, 0.f, 1.f }
 };
 
 static const char* vertex_shader_text =
 "uniform float factor;\n"
 "uniform mat4 MVP;\n"
 "attribute vec3 vCol;\n"
-"attribute vec2 vPos;\n"
+"attribute vec3 vPos;\n"
 "varying vec3 color;\n"
 "void main()\n"
 "{\n"
-"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
+"    gl_Position = MVP * vec4(vPos, 1.0);\n"
 // "    color = vCol;\n"
 "    color = vec3(vCol[0]*factor, vCol[1]*factor, vCol[2]*factor );\n"
 "}\n";
-
 
 static const char* fragment_shader_text =
 "varying vec3 color;\n"
@@ -42,26 +68,7 @@ static const char* fragment_shader_text =
 "}\n";
 
 
-#if 0
-static const char* vertex_shader_text_old =
-"uniform mat4 MVP;\n"
-"attribute vec3 vCol;\n"
-"attribute vec2 vPos;\n"
-"varying vec3 color;\n"
-"void main()\n"
-"{\n"
-"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-"    color = vCol * factor;\n"
-"}\n";
 
-
-static const char* fragment_shader_text_old =
-"varying vec3 color;\n"
-"void main()\n"
-"{\n"
-"    gl_FragColor = vec4(color, 1.0);\n"
-"}\n";
-#endif
 
 
 
@@ -75,14 +82,59 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS || key == GLFW_KEY_Q && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, 1);
-        // glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    else if (key == GLFW_KEY_LEFT )
+    {
+        camera->moveLocal( glm::vec3(-1, 0, 0) );
+    }
+    else if (key == GLFW_KEY_RIGHT )
+    {
+        camera->moveLocal( glm::vec3(1, 0, 0) );
+    }    
+    else if (key == GLFW_KEY_UP )
+    {
+        camera->moveLocal( glm::vec3(0, 0, -1) );
+    }
+    else if (key == GLFW_KEY_DOWN )
+    {
+        camera->moveLocal( glm::vec3(0, 0, 1) );
+    }
+
+    else if (key == GLFW_KEY_A )
+    {
+        camera->yawCamera( 0.04f );
+    }
+    else if (key == GLFW_KEY_D )
+    {
+        camera->yawCamera( -0.04f );
+    }    
+    else if (key == GLFW_KEY_W )
+    {
+        camera->pitchCamera( -0.04f );
+    }
+    else if (key == GLFW_KEY_S )
+    {
+        camera->pitchCamera( 0.04f );
+    }
+
+
 }
+
+
+
+static int initFremdeWelten( void )
+{
+    std::cout << "initFremdeWelten..." << std::endl;
+    camera = new CCamera(glm::vec3(0.f, 0.f, 10.f));
+    return 0;
+}
+
+
+
 
 
 int main(void)
 {
-
-    std::cout << "Hello!" << std::endl;
     
     GLFWwindow* window;
     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
@@ -93,12 +145,17 @@ int main(void)
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+    window = glfwCreateWindow(640, 480, "Fremde Welten", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
+
+
+
+
+    initFremdeWelten();
 
     glfwSetKeyCallback(window, key_callback);
     glfwMakeContextCurrent(window);
@@ -109,6 +166,7 @@ int main(void)
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
@@ -123,6 +181,7 @@ int main(void)
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
 
+
     mvp_location = glGetUniformLocation(program, "MVP");
     vpos_location = glGetAttribLocation(program, "vPos");
     vcol_location = glGetAttribLocation(program, "vCol");
@@ -134,39 +193,75 @@ int main(void)
     std::cout << fact_location << std::endl;
 
     glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(float) * 5, (void*) 0);
+    glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(float) * 6, (void*) 0);
 
     glEnableVertexAttribArray(vcol_location);
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(float) * 5, (void*) (sizeof(float) * 2));
+                          sizeof(float) * 6, (void*) (sizeof(float) * 2));
 
     // glEnableVertexAttribArray(fact_location);
 
 
     GLfloat color_factors[9];
     
-    mat4x4 m, p, mvp;
+    const float* vp_array;
+
+    // mat4x4 m, p, mvp;
+    
+    glm::mat4 m, p, mvp, v;
 
     while (!glfwWindowShouldClose(window))
     {
+
         float ratio;
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         ratio = width / (float) height;
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
-        mat4x4_identity(m);
-        mat4x4_rotate_Y(m, m, (float) glfwGetTime());
-        mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        mat4x4_mul(mvp, p, m);
 
 
         #if 1
         glUseProgram(program);
 
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+        // camera->yawCamera( 0.01f );
+        // camera->setPerspective(60.f, ratio, -0.1f, -100.f );
 
+
+        vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
+        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
+
+        // camera->printView();
+        // camera->printVectors();
+
+        // camera->pitchCamera( 0.01f );
+
+        
+        /// very first approach
+        // mat4x4_identity(m);
+        // mat4x4_rotate_Y(m, m, (float) glfwGetTime());
+        // mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+        // mat4x4_mul(mvp, p, m);
+        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+
+        /// own approach with glm math
+        m = glm::mat4(1.f);
+
+        v = glm::rotate( m, (float) glfwGetTime(), glm::vec3( 0.f, 1.f, 0.f) );
+        v = glm::translate(v, glm::vec3(0,0,3));
+
+        // p = glm::perspective( 60.f, 1.f/ratio, 0.1f, 100.f );
+        p = glm::ortho( -ratio, ratio, -1.f, 1.f, 10.f, -10.f );
+
+        mvp = p * v * m;
+        // mvp = p * m;
+        glUniformMatrix4fv( mvp_location, 1, GL_FALSE, glm::value_ptr(mvp) );
+        
+
+
+
+      
         float f;
         f = (float)( std::rand() / (float)(RAND_MAX) );
 
@@ -199,6 +294,26 @@ int main(void)
         glEnd();
         glPopMatrix();
         #endif 
+
+
+        float scale = 0.2f;
+        int length = 10;
+
+        glLoadMatrixf( vp_array );
+
+        glBegin(GL_LINES);
+            for(int i=-length; i<=length; i++)
+            {
+                for(int j=-length; j<=length; j++)
+                {
+                    glVertex3f(float(length)*scale, float(j)*scale, 0 );
+                    glVertex3f(float(-length)*scale, float(j)*scale, 0 );
+                }
+
+                glVertex3f(float(i)*scale, float(length)*scale, 0 );
+                glVertex3f(float(i)*scale, float(-length)*scale, 0 );
+            }
+        glEnd();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
