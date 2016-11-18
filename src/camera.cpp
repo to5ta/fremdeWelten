@@ -19,6 +19,20 @@ CCamera::CCamera(glm::vec3 pos)
 }
 
 
+void CCamera::strafeCamera(float sidewards )
+{
+    position += right * moveSpeed * sidewards;
+    updateMatrizes();
+}
+
+
+void CCamera::pushCamera(float forward )
+{
+    position += direction * moveSpeed * forward;
+    updateMatrizes();
+}
+
+
 
 void CCamera::yawCamera(float d_yaw_f )
 {
@@ -53,7 +67,7 @@ void CCamera::initCamera(glm::vec3 pos)
 
     position = pos;
     moveSpeed= 0.03f;
-    rotSpeed = 0.005f;
+    rotSpeed = 0.007f;
     yaw_f = -1.57079f;
     pitch_f = 0.f;
 

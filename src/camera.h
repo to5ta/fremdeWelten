@@ -28,9 +28,10 @@ public:
     void yawCamera( float d_yaw_f );
     void pitchCamera( float d_pitch_f );
 
-    /// get the View*Projection Matrix
-    glm::mat4 getViewProjectionMatrix();
+    void strafeCamera(float sidewards );
+    void pushCamera(float forward );
 
+    glm::mat4 getViewProjectionMatrix();
 
 
 private:

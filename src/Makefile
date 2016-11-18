@@ -1,6 +1,7 @@
 # Makefile for fremdeWelten, tostas 3D Spielplatz
 
-WARN 	= -Wall -Wextra -Wstack-protector -W
+# WARN 	= -Wall -Wextra -Wstack-protector -W
+WARN 	= 
 BIN 	= ../bin/
 OBJ 	= ../obj/
 TARGET 	= $(BIN)fremdeWelten
@@ -8,7 +9,7 @@ MODULES = $(OBJ)*.o
 INCLUDE = -I/usr/include/ -I. -Ideps
 CC 		= $(DEBUG) $(WARN)
 DEBUG 	=
-LIBS 	= -lglfw -lGL
+LIBS 	= -lglfw -lGL -lSOIL
 # LIBS = -lGL -lGLU -lglfw -lGLEW -glew32 -lopengl32
 
 
