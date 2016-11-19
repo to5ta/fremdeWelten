@@ -41,6 +41,7 @@ void CCamera::yawCamera(float d_yaw_f )
 }
 
 
+
 void CCamera::pitchCamera(float d_pitch_f )
 {
     float newPitch = pitch_f + d_pitch_f * rotSpeed;
@@ -56,7 +57,7 @@ void CCamera::pitchCamera(float d_pitch_f )
 }
 
 
-
+/// init something
 void CCamera::initCamera(glm::vec3 pos)
 {
     projection_matrix   = glm::ortho(-1.f, 1.f, -1.f, 1.f, -20.f, 20.f); //0.1f, 100.f);
@@ -66,8 +67,8 @@ void CCamera::initCamera(glm::vec3 pos)
     right       = glm::vec3(1.f, 0.f, 0.f);
 
     position = pos;
-    moveSpeed= 0.03f;
-    rotSpeed = 0.007f;
+    moveSpeed= 0.05f;
+    rotSpeed = 0.009f;
     yaw_f = -1.57079f;
     pitch_f = 0.f;
 
@@ -77,24 +78,19 @@ void CCamera::initCamera(glm::vec3 pos)
 
 
 
+/// recalc view matrix as yaw pitch pos might have changed
 void CCamera::updateMatrizes( void )
 {
-    // yaw pitch pos might have changed
 
     direction.x = cos(pitch_f) * cos(yaw_f);
     direction.y = sin(pitch_f);
     direction.z = cos(pitch_f) * sin(yaw_f);
-
-    // direction.x = cos(yaw_f);
-    // direction.y = 0.f;
-    // direction.z = sin(yaw_f);
 
     glm::vec3 up_global = glm::vec3(0.f,1.f,0.f); 
     right               = glm::normalize(glm::cross(direction, up_global));
     up                  = glm::cross(right, direction);
 
     view_matrix = glm::lookAt( position, position+direction, up );
-
 
     // std::cout<< "\nview matrix\n"<<glm::to_string(view_matrix) <<std::endl;
     // std::cout<< "\nposition\n"<<glm::to_string(position) <<std::endl;
@@ -106,8 +102,6 @@ void CCamera::updateMatrizes( void )
 
 
 }
-
-
 
 
 
@@ -123,6 +117,8 @@ void CCamera::setPerspective( float fovy_f, float aspect_f, float zNear_f, float
 {
     projection_matrix   = glm::perspective(fovy_f, aspect_f, zNear_f, zFar_f);
 }
+
+
 
 /// set projection matrix to orthogonal
 void CCamera::setOrtho( float ratio_f, float zNear_f, float zFar_f )
@@ -148,30 +144,6 @@ void CCamera::moveLocal( glm::vec3 d_location )
 
     // update
     updateMatrizes();
-
-
-
-    // // d_location = d_location*moveSpeed;
-    // // std::cout<<glm::to_string(d_location) <<std::endl;
-    // // glm::mat4 translate = glm::translate(glm::mat4(1.0f), d_location);
-
-    // vec4 translate = glm::vec4(d_location.x, d_location.y, d_location.z, 1.f);
-
-    // translate = glm::normalize(view_matrix * translate);
-
-    // glm::mat4 translate = glm::mat4( 1.f, 0.f, 0.f, d_location.x,
-    //                                  0.f, 1.f, 0.f, d_location.y,
-    //                                  0.f, 0.f, 1.f, d_location.z,
-    //                                  0.f, 0.f, 0.f, 1.f );
-
-    // std::cout<<"\n-----------\nView Matrix"<<glm::to_string(view_matrix) <<std::endl;
-    // translate = view_matrix*translate;
-    // std::cout<<"Translate Matrix"<<glm::to_string(translate) <<std::endl;
-    // view_matrix = view_matrix + translate;
-
-
-    
-    // = glm::vec4(d_location.x, d_location.y, d_location.z, 1.f);
 }
 
 

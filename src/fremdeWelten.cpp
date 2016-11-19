@@ -42,40 +42,54 @@ public:
     float x, y, z;
     float r, g, b;
     float u, v;
-} vertices[3] =
+} vertices[4] =
 {
-    { -0.6f, 0.1f, 0.f, 1.f, 0.f, 0.f, 1.f,  0.f },
-    {  0.6f, 0.1f, 0.f, 0.f, 1.f, 0.f, 1.f,  1.f },
-    {   0.f,  1.1f, 0.f, 0.f, 0.f, 1.f, 0.f,  0.5f }
+    {  0.5f, 0.1f, 0.f,  0.f, 1.f, 0.f,  0.f,  1.f },
+    {  0.5f, 1.1f, 0.f,  0.f, 0.f, 1.f,  0.f,  0.f },
+    { -0.5f, 0.1f, 0.f,  1.f, 0.f, 0.f,  1.f,  1.f },
+    { -0.5f, 1.1f, 0.f,  0.f, 0.f, 1.f,  1.f, 0.0f }
 };
 
 static const char* vertex_shader_text =
 "uniform float factor;\n"
+"uniform float step;\n"
 "uniform mat4 MVP;\n"
 "attribute vec3 vCol;\n"
 "attribute vec3 vPos;\n"
 "attribute vec2 vUV;\n"
 "varying vec3 color;\n"
 "varying vec2 uv;\n"
+// "varying float fac;\n"
 "void main()\n"
 "{\n"
+"    float i = mod(floor(step), 36);\n"
+"    float du = floor(mod(i, 6.f));\n"
+"    float dv = floor(i/6.f);\n"
+
 "    gl_Position = MVP * vec4(vPos, 1.0);\n"
-"    uv = vUV;\n"
+// "    gl_Position = MVP * vec4(vPos.x, vPos.y, vPos.z, 1.0);\n"
+"    uv[0] = (vUV[0]/6.f) + 1.f/6.f * du;\n"
+"    uv[1] = (vUV[1]/6.f) + 1.f/6.f * dv;\n"
 // "    color = vCol;\n"
 "    color = vec3(vCol[0]*factor, vCol[1]*factor, vCol[2]*factor );\n"
+
 "}\n";
 
+
 static const char* fragment_shader_text =
+"uniform float factor;\n"
 "varying vec3 color;\n"
 "varying vec2 uv;\n"
 "uniform sampler2D Tex;\n"
+// "varying float fac;\n"
+
 "vec2 uvpos = vec2(0.5, 0.5);\n" 
 "void main()\n"
 "{\n"
-"    gl_FragColor = texture(Tex, uvpos);\n"
-// "    vec4 tex = texture(Tex, uv);\n"
-// "    gl_FragColor = vec4(color, 1.0);\n"
-// "    gl_FragColor = vec4(uvpos,1.0, 1.0);\n"
+"    vec4 tex = texture2D(Tex, uv);\n"
+"    if(tex[0]<0.08f) discard;\n"
+"    tex[3] = tex[0];\n"
+"    gl_FragColor = tex*factor;\n"
 "}\n";
 
 
@@ -161,7 +175,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static int initFremdeWelten( void )
 {
     std::cout << "initFremdeWelten..." << std::endl;
-    camera = new CCamera(glm::vec3(0.f, 1.5f, 10.f));
+    camera = new CCamera(glm::vec3(0.f, 1.f, 4.f));
     return 0;
 }
 
@@ -190,7 +204,6 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-
     // fullscreen stuff - does not work right now
     // GLFWmonitor* primary = glfwGetPrimaryMonitor();
     // glfwSetWindowMonitor( window, primary, 0, 0, 1920, 1080, 60 );   
@@ -204,6 +217,21 @@ int main(void)
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     // seems to activate v-sync
     glfwSwapInterval(1);
+
+
+
+    // enable depth testing, Very important
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS); 
+
+    // antialiasing: has this realy an impact
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    glEnable(GL_MULTISAMPLE);  
+
+    // blending for transparancy
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+
 
 
     // NOTE: OpenGL error checks have been omitted for brevity
@@ -241,8 +269,19 @@ int main(void)
     GLint vpos_location = glGetAttribLocation(program, "vPos");
     printf("vpos_location=%i\n", vpos_location );
     GLint vcol_location = glGetAttribLocation(program, "vCol");
-    printf("vcol_location=%i\n", vcol_location );
+    // printf("vcol_location=%i\n", vcol_location );
 
+
+
+    GLint step_location = glGetUniformLocation(program, "step");
+    printf("step_location=%i\n", step_location );
+    glUniform1f(step_location, 0.f);
+  
+
+    // enter time
+    GLint time_location = glGetUniformLocation(program, "time");
+    printf("time_location=%i\n", vcol_location );
+    glUniform1f(time_location, 0.f);
 
     // scale vertex color later with that variable
     GLint fact_location;
@@ -284,7 +323,7 @@ int main(void)
     // create texture
     int width, height;
     unsigned char* image = NULL;
-    image = SOIL_load_image("../gfx/fire.png", &width, &height, 0, SOIL_LOAD_RGB); 
+    image = SOIL_load_image("../gfx/torch_spritesheet.jpg", &width, &height, 0, SOIL_LOAD_RGB); 
 
     if(!image)
     {
@@ -357,51 +396,19 @@ int main(void)
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         ratio = width / (float) height;
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-
-    
-        glUseProgram(program);
-
-        // camera->yawCamera( 0.01f );
         camera->setPerspective(0.4f, ratio, 0.1f, 100.f );
-
-
-        vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
-
-
-        // // std::cout << glfwGetTime() << std::endl;
-
-        // ...call the amublances :D
-        glUniform1f(fact_location, (1.f + sin(glfwGetTime()*2.f))/2.f );
-        
-
-
-        glBindTexture(GL_TEXTURE_2D, texture);
-        // glBindVertexArray(VAO);
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        // glBindVertexArray(0);
+        glViewport(0, 0, width, height);
+        glClearColor(0.02f, 0.02f, 0.04f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
 
 
 
-
-
-
-
-
-
-        // bad-evil immediate mode :D
-
+        // bad-evil immediate mode to draw grid:D
         glUseProgram(0);
-
         float scale = 0.2f;
         int length = 10;
-
         glLoadMatrixf( vp_array );
-
+        glColor3f(0.1f,0.1f,0.1f);
         glBegin(GL_LINES);
             for(int i=-length; i<=length; i++)
             {
@@ -410,11 +417,31 @@ int main(void)
                     glVertex3f(float(length)*scale, 0, float(j)*scale );
                     glVertex3f(float(-length)*scale, 0, float(j)*scale );
                 }
-
                 glVertex3f(float(i)*scale, 0, float(length)*scale );
                 glVertex3f(float(i)*scale, 0, float(-length)*scale);
             }
         glEnd();
+
+
+
+        // draw FIRE
+        glUseProgram(program);
+
+        glUniform1f(step_location, glfwGetTime()*45.f);
+        glUniform1f(time_location, glfwGetTime());
+
+        vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
+        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
+
+        // ...call the amublances :D
+        glUniform1f(fact_location, (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
+        
+        glBindTexture(GL_TEXTURE_2D, texture);
+        // glBindVertexArray(VAO);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        // glBindVertexArray(0);
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
