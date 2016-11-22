@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+
 #include <glm/gtx/string_cast.hpp> 
 // #include "linmath.h"
 #include <glm/glm.hpp>
@@ -21,9 +22,9 @@
 
 #include <cstdlib> // for random numbers
 
-#include <CShader.hpp>
+#include <Shader.hpp>
 #include <camera.h>
-#include <bmpImage.h>
+// #include <bmpImage.h>
 
 // enables image loading
 #include <SOIL/SOIL.h>
@@ -243,7 +244,7 @@ int main(void)
 
 
 
-    //////////////////////////////////
+    ////////////////////////////////
     // actual shader creation
     GLuint vertex_shader, fragment_shader, program;
 
@@ -259,9 +260,8 @@ int main(void)
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
-    /////////////////////////////////
 
-
+    //////////
 
     // get location ("id/adress") access
     GLint mvp_location = glGetUniformLocation(program, "MVP");
@@ -271,13 +271,10 @@ int main(void)
     GLint vcol_location = glGetAttribLocation(program, "vCol");
     // printf("vcol_location=%i\n", vcol_location );
 
-
-
     GLint step_location = glGetUniformLocation(program, "step");
     printf("step_location=%i\n", step_location );
     glUniform1f(step_location, 0.f);
   
-
     // enter time
     GLint time_location = glGetUniformLocation(program, "time");
     printf("time_location=%i\n", vcol_location );
@@ -290,11 +287,9 @@ int main(void)
 
     // negative when failed?
     // std::cout << fact_location << std::endl;
-    //////////////////////////////////
 
+    /////////
 
-
-    //////////////////////////////////
     // enable VertexAttributes
     glEnableVertexAttribArray(vpos_location);
     glVertexAttribPointer(  vpos_location, 
@@ -318,6 +313,10 @@ int main(void)
 
 
 
+    Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
+
+
+
 
     //////////////////////////////////
     // create texture
@@ -329,7 +328,6 @@ int main(void)
     {
         printf("Image loading failed!\n");
     }
-
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -351,8 +349,10 @@ int main(void)
     SOIL_free_image_data(image);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    /////////////////////////////////
 
-    GLint uv_location = glGetAttribLocation(program, "vUV");
+
+    GLint uv_location = glGetAttribLocation(torchShader.programID, "vUV");
 
     printf("uv_location=%i\n", uv_location );
 
@@ -364,7 +364,6 @@ int main(void)
                             8 * sizeof(GLfloat),            // stride, internal offset
                             (GLvoid*)(6 * sizeof(GLfloat))  // offset in buffer for first element
                         );
-
 
     //////////////////////////////////
 
@@ -422,23 +421,39 @@ int main(void)
             }
         glEnd();
 
+        glClear(GL_DEPTH_BUFFER_BIT);  
 
 
         // draw FIRE
-        glUseProgram(program);
+        // glUseProgram(program);
 
-        glUniform1f(step_location, glfwGetTime()*45.f);
-        glUniform1f(time_location, glfwGetTime());
+        // glUniform1f(step_location, glfwGetTime()*45.f);
+        // glUniform1f(time_location, glfwGetTime());
+        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
+        
+        // glUseProgram(torchShader.programID);
+        torchShader.use();
+
+        glUniform1f(glGetUniformLocation(torchShader.programID, "step"), glfwGetTime()*45.f);
+
+        // std::cout << "step location: " << glGetUniformLocation(torchShader.programID, "step") << std::endl;
+        // std::cout << "time location: " << glGetUniformLocation(torchShader.programID, "time") << std::endl;
+
+        glUniform1f(glGetUniformLocation(torchShader.programID, "time"), glfwGetTime());
 
         vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
+        
+        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
+        glUniformMatrix4fv(glGetUniformLocation(torchShader.programID, "MVP"), 1, GL_FALSE, vp_array);
 
         // ...call the amublances :D
-        glUniform1f(fact_location, (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
+        // glUniform1f(fact_location, (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
+        glUniform1f(glGetUniformLocation(torchShader.programID, "factor"), 
+                    (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
         
         glBindTexture(GL_TEXTURE_2D, texture);
         // glBindVertexArray(VAO);
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // glDrawElements(GL_TRIANGLES, 4, GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         // glBindVertexArray(0);
 

@@ -14,7 +14,8 @@ LIBS 	= -lglfw -lGL -lSOIL
 
 
 # all: clean glad camera fremdeWelten link
-all: clean glad camera fremdeWelten link
+# all: clean glad camera Shader fremdeWelten link 
+all: clean Shader glad camera fremdeWelten link 
 	@echo Building fremdeWelten done!
 
 clean:
@@ -27,6 +28,7 @@ link:
 
 glad:
 	g++ $(CC) -c deps/glad.c $(INCLUDE) -o $(OBJ)glad.o
+
 
 
 run:
