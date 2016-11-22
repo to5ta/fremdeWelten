@@ -1,22 +1,25 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <fstream>
-#include <iostream>
-#include <string>
 
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
+// #include <GL/glew.h>
 
 
 /**
 	CShader class provides functionality to easily create and compile shaders 
 */
-class CShader
+class Shader
 {
 public:
-	CShader();
-	CShader( char* fpath );
-	~CShader();
+	GLuint programID;
+
+	Shader(const GLchar* vertexPath, const GLchar* fragmentPath);
 	
-	static int createFromTextfile( char* fpath );
+	void use();
 
 };
 
