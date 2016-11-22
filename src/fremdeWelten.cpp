@@ -1,13 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-
 #include <glm/gtx/string_cast.hpp> 
-// #include "linmath.h"
 #include <glm/glm.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -24,7 +21,6 @@
 
 #include <Shader.hpp>
 #include <camera.h>
-// #include <bmpImage.h>
 
 // enables image loading
 #include <SOIL/SOIL.h>
@@ -244,53 +240,62 @@ int main(void)
 
 
 
-    ////////////////////////////////
-    // actual shader creation
-    GLuint vertex_shader, fragment_shader, program;
 
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
 
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
+    // ////////////////////////////////
+    // // actual shader creation
 
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
+     Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
 
-    //////////
 
-    // get location ("id/adress") access
-    GLint mvp_location = glGetUniformLocation(program, "MVP");
-    printf("mvp_location=%i\n", mvp_location );
-    GLint vpos_location = glGetAttribLocation(program, "vPos");
-    printf("vpos_location=%i\n", vpos_location );
-    GLint vcol_location = glGetAttribLocation(program, "vCol");
+    // GLuint vertex_shader, fragment_shader, program;
+
+    // vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    // glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+    // glCompileShader(vertex_shader);
+
+    // fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    // glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+    // glCompileShader(fragment_shader);
+
+    // program = glCreateProgram();
+    // glAttachShader(program, vertex_shader);
+    // glAttachShader(program, fragment_shader);
+    // glLinkProgram(program);
+
+    // //////////
+
+    // // get location ("id/adress") access
+    // GLint mvp_location = glGetUniformLocation(program, "MVP");
+    // printf("mvp_location=%i\n", mvp_location );
+    // GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
+    // printf("vpos_location=%i\n", vpos_location );
+    // GLint vcol_location = glGetAttribLocation(torchShader.programID, "vCol");
     // printf("vcol_location=%i\n", vcol_location );
 
-    GLint step_location = glGetUniformLocation(program, "step");
-    printf("step_location=%i\n", step_location );
-    glUniform1f(step_location, 0.f);
+    // GLint step_location = glGetUniformLocation(program, "step");
+    // printf("step_location=%i\n", step_location );
+    // glUniform1f(step_location, 0.f);
   
-    // enter time
-    GLint time_location = glGetUniformLocation(program, "time");
-    printf("time_location=%i\n", vcol_location );
-    glUniform1f(time_location, 0.f);
+    // // enter time
+    // GLint time_location = glGetUniformLocation(program, "time");
+    // printf("time_location=%i\n", time_location );
+    // glUniform1f(time_location, 0.f);
 
-    // scale vertex color later with that variable
-    GLint fact_location;
-    fact_location = glGetUniformLocation(program, "factor");
-    glUniform1f(fact_location, 1.);
+    // // scale vertex color later with that variable
+    // GLint fact_location;
+    // fact_location = glGetUniformLocation(program, "factor");
+    // glUniform1f(fact_location, 1.);
 
-    // negative when failed?
-    // std::cout << fact_location << std::endl;
+    // // negative when failed?
+    // // std::cout << fact_location << std::endl;
 
     /////////
 
-    // enable VertexAttributes
+    GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
+    GLint vcol_location = glGetAttribLocation(torchShader.programID, "vCol");
+    
+    // enable VertexAttributes, NON-oFF SHADER BUSSINESS
     glEnableVertexAttribArray(vpos_location);
     glVertexAttribPointer(  vpos_location, 
                             3, 
@@ -313,10 +318,7 @@ int main(void)
 
 
 
-    Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
-
-
-
+   
 
     //////////////////////////////////
     // create texture
@@ -421,7 +423,6 @@ int main(void)
             }
         glEnd();
 
-        glClear(GL_DEPTH_BUFFER_BIT);  
 
 
         // draw FIRE

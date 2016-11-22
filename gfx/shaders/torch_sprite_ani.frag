@@ -1,8 +1,9 @@
 uniform float factor;
+uniform sampler2D Tex;
+
 varying vec3 color;
 varying vec2 uv;
-uniform sampler2D Tex;
-// varying float fac;
+
 
 vec2 uvpos = vec2(0.5, 0.5); 
 void main()

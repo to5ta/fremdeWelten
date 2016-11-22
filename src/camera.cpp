@@ -22,6 +22,7 @@ CCamera::CCamera(glm::vec3 pos)
 void CCamera::strafeCamera(float sidewards )
 {
     position += right * moveSpeed * sidewards;
+    position.y = .5f;
     updateMatrizes();
 }
 
@@ -29,6 +30,7 @@ void CCamera::strafeCamera(float sidewards )
 void CCamera::pushCamera(float forward )
 {
     position += direction * moveSpeed * forward;
+    position.y = .5f;
     updateMatrizes();
 }
 
@@ -68,7 +70,7 @@ void CCamera::initCamera(glm::vec3 pos)
 
     position = pos;
     moveSpeed= 0.05f;
-    rotSpeed = 0.009f;
+    rotSpeed = 0.014f;
     yaw_f = -1.57079f;
     pitch_f = 0.f;
 
@@ -130,6 +132,8 @@ void CCamera::setOrtho( float ratio_f, float zNear_f, float zFar_f )
 
 void CCamera::moveLocal( glm::vec3 d_location )
 {
+    std::cout<< "\nDEPRECATED\n"<< std::endl;
+    
 
     // bring in our coordinate system
     glm::vec4 d_loc = view_matrix * glm::vec4(d_location.x, d_location.y, d_location.z, 0.f);

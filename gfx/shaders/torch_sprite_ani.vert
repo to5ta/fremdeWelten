@@ -1,10 +1,10 @@
-uniform float factor;
-uniform float step;
-uniform mat4 MVP;
-
 attribute vec3 vCol;
 attribute vec3 vPos;
 attribute vec2 vUV;
+
+uniform float factor;
+uniform float step;
+uniform mat4 MVP;
 
 varying vec3 color;
 varying vec2 uv;
