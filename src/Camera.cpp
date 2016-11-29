@@ -1,4 +1,4 @@
-#include <camera.h>
+#include <Camera.h>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -8,18 +8,18 @@
 #include <glm/gtx/string_cast.hpp> 
 #include <glm/gtx/euler_angles.hpp>
 
-CCamera::CCamera()
+Camera::Camera()
 {
     initCamera(glm::vec3(0,0,0));
 }
 
-CCamera::CCamera(glm::vec3 pos)
+Camera::Camera(glm::vec3 pos)
 {
     initCamera(pos);
 }
 
 
-void CCamera::strafeCamera(float sidewards )
+void Camera::strafeCamera(float sidewards )
 {
     position += right * moveSpeed * sidewards;
     position.y = .5f;
@@ -27,7 +27,7 @@ void CCamera::strafeCamera(float sidewards )
 }
 
 
-void CCamera::pushCamera(float forward )
+void Camera::pushCamera(float forward )
 {
     position += direction * moveSpeed * forward;
     position.y = .5f;
@@ -36,7 +36,7 @@ void CCamera::pushCamera(float forward )
 
 
 
-void CCamera::yawCamera(float d_yaw_f )
+void Camera::yawCamera(float d_yaw_f )
 {
     yaw_f += d_yaw_f * rotSpeed;
     updateMatrizes();
@@ -44,7 +44,7 @@ void CCamera::yawCamera(float d_yaw_f )
 
 
 
-void CCamera::pitchCamera(float d_pitch_f )
+void Camera::pitchCamera(float d_pitch_f )
 {
     float newPitch = pitch_f + d_pitch_f * rotSpeed;
 
@@ -60,7 +60,7 @@ void CCamera::pitchCamera(float d_pitch_f )
 
 
 /// init something
-void CCamera::initCamera(glm::vec3 pos)
+void Camera::initCamera(glm::vec3 pos)
 {
     projection_matrix   = glm::ortho(-1.f, 1.f, -1.f, 1.f, -20.f, 20.f); //0.1f, 100.f);
     
@@ -81,7 +81,7 @@ void CCamera::initCamera(glm::vec3 pos)
 
 
 /// recalc view matrix as yaw pitch pos might have changed
-void CCamera::updateMatrizes( void )
+void Camera::updateMatrizes( void )
 {
 
     direction.x = cos(pitch_f) * cos(yaw_f);
@@ -107,7 +107,7 @@ void CCamera::updateMatrizes( void )
 
 
 
-glm::mat4 CCamera::getViewProjectionMatrix()
+glm::mat4 Camera::getViewProjectionMatrix()
 {
     return projection_matrix * view_matrix;
 }
@@ -115,7 +115,7 @@ glm::mat4 CCamera::getViewProjectionMatrix()
 
 
 /// set projection matrix to perspective
-void CCamera::setPerspective( float fovy_f, float aspect_f, float zNear_f, float zFar_f )
+void Camera::setPerspective( float fovy_f, float aspect_f, float zNear_f, float zFar_f )
 {
     projection_matrix   = glm::perspective(fovy_f, aspect_f, zNear_f, zFar_f);
 }
@@ -123,14 +123,14 @@ void CCamera::setPerspective( float fovy_f, float aspect_f, float zNear_f, float
 
 
 /// set projection matrix to orthogonal
-void CCamera::setOrtho( float ratio_f, float zNear_f, float zFar_f )
+void Camera::setOrtho( float ratio_f, float zNear_f, float zFar_f )
 {
     projection_matrix   = glm::ortho(-ratio_f, ratio_f, -1.f, 1.f, zNear_f, zFar_f);
 }
 
 
 
-void CCamera::moveLocal( glm::vec3 d_location )
+void Camera::moveLocal( glm::vec3 d_location )
 {
     std::cout<< "\nDEPRECATED\n"<< std::endl;
     

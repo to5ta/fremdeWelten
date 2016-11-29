@@ -17,16 +17,23 @@
 #include <stdio.h>
 #include <iostream>
 
-#include <cstdlib> // for random numbers
-
-#include <Shader.hpp>
-#include <camera.h>
+#include <cstdlib> 
+// for random numbers
 
 // enables image loading
 #include <SOIL/SOIL.h>
 
+// #include <assimp>
 
-CCamera* camera;
+
+#include <Shader.hpp>
+#include <Camera.h>
+#include <Modell.h>
+
+
+
+
+Camera* camera;
 
 GLfloat lastX = 0.f;
 GLfloat lastY = 0.f;
@@ -47,56 +54,12 @@ public:
     { -0.5f, 1.1f, 0.f,  0.f, 0.f, 1.f,  1.f, 0.0f }
 };
 
-static const char* vertex_shader_text =
-"uniform float factor;\n"
-"uniform float step;\n"
-"uniform mat4 MVP;\n"
-"attribute vec3 vCol;\n"
-"attribute vec3 vPos;\n"
-"attribute vec2 vUV;\n"
-"varying vec3 color;\n"
-"varying vec2 uv;\n"
-// "varying float fac;\n"
-"void main()\n"
-"{\n"
-"    float i = mod(floor(step), 36);\n"
-"    float du = floor(mod(i, 6.f));\n"
-"    float dv = floor(i/6.f);\n"
-
-"    gl_Position = MVP * vec4(vPos, 1.0);\n"
-// "    gl_Position = MVP * vec4(vPos.x, vPos.y, vPos.z, 1.0);\n"
-"    uv[0] = (vUV[0]/6.f) + 1.f/6.f * du;\n"
-"    uv[1] = (vUV[1]/6.f) + 1.f/6.f * dv;\n"
-// "    color = vCol;\n"
-"    color = vec3(vCol[0]*factor, vCol[1]*factor, vCol[2]*factor );\n"
-
-"}\n";
-
-
-static const char* fragment_shader_text =
-"uniform float factor;\n"
-"varying vec3 color;\n"
-"varying vec2 uv;\n"
-"uniform sampler2D Tex;\n"
-// "varying float fac;\n"
-
-"vec2 uvpos = vec2(0.5, 0.5);\n" 
-"void main()\n"
-"{\n"
-"    vec4 tex = texture2D(Tex, uv);\n"
-"    if(tex[0]<0.08f) discard;\n"
-"    tex[3] = tex[0];\n"
-"    gl_FragColor = tex*factor;\n"
-"}\n";
-
-
 
 
 static void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
-
 
 
 
@@ -119,8 +82,8 @@ static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    camera->yawCamera(-xoffset);
-    camera->pitchCamera(-yoffset);
+    camera->yawCamera(xoffset);
+    camera->pitchCamera(yoffset);
 
 }  
 
@@ -172,7 +135,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static int initFremdeWelten( void )
 {
     std::cout << "initFremdeWelten..." << std::endl;
-    camera = new CCamera(glm::vec3(0.f, 1.f, 4.f));
+    camera = new Camera(glm::vec3(0.f, 1.f, 4.f));
     return 0;
 }
 
@@ -205,7 +168,6 @@ int main(void)
     // GLFWmonitor* primary = glfwGetPrimaryMonitor();
     // glfwSetWindowMonitor( window, primary, 0, 0, 1920, 1080, 60 );   
 
-
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
@@ -214,7 +176,6 @@ int main(void)
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     // seems to activate v-sync
     glfwSwapInterval(1);
-
 
 
     // enable depth testing, Very important
@@ -245,8 +206,11 @@ int main(void)
     // ////////////////////////////////
     // // actual shader creation
 
-     Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
+    Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
 
+
+    Shader suzeShader( "../gfx/shaders/suzeShader.vert", "../gfx/shaders/suzeShader.frag" );
+    Model suzeModel("../gfx/assets/suze.obj");
 
     // GLuint vertex_shader, fragment_shader, program;
 
@@ -432,17 +396,15 @@ int main(void)
         // glUniform1f(time_location, glfwGetTime());
         // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
         
+
+        vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
+        
         // glUseProgram(torchShader.programID);
         torchShader.use();
 
         glUniform1f(glGetUniformLocation(torchShader.programID, "step"), glfwGetTime()*45.f);
-
-        // std::cout << "step location: " << glGetUniformLocation(torchShader.programID, "step") << std::endl;
-        // std::cout << "time location: " << glGetUniformLocation(torchShader.programID, "time") << std::endl;
-
         glUniform1f(glGetUniformLocation(torchShader.programID, "time"), glfwGetTime());
 
-        vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
         
         // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
         glUniformMatrix4fv(glGetUniformLocation(torchShader.programID, "MVP"), 1, GL_FALSE, vp_array);
@@ -457,6 +419,10 @@ int main(void)
         // glDrawElements(GL_TRIANGLES, 4, GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         // glBindVertexArray(0);
+
+
+
+        suzeModel.Draw(suzeShader);
 
 
         glfwSwapBuffers(window);

@@ -9,13 +9,13 @@ MODULES = $(OBJ)*.o
 INCLUDE = -I/usr/include/ -I. -Ideps
 CC 		= $(DEBUG) $(WARN)
 DEBUG 	=
-LIBS 	= -lglfw -lGL -lSOIL
+LIBS 	= -lglfw -lGL -lSOIL -lassimp
 # LIBS = -lGL -lGLU -lglfw -lGLEW -glew32 -lopengl32
 
 
 # all: clean glad camera fremdeWelten link
 # all: clean glad camera Shader fremdeWelten link 
-all: clean Shader glad camera fremdeWelten link 
+all: clean glad Shader Camera fremdeWelten link 
 	@echo Building fremdeWelten done!
 
 clean:

@@ -4,15 +4,15 @@
 #include <iostream>
 
 
-class CCamera{
+class Camera{
 
 public:
 
     // constructors
-    CCamera();
-    CCamera(glm::vec3 pos);
+    Camera();
+    Camera(glm::vec3 pos);
 
-    ~CCamera();
+    ~Camera();
 
     /// set projection matrix to perspective
     void setPerspective( float fovy_f, float aspect_f, float zNear_f, float zFar_f );
