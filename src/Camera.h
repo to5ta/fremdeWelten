@@ -25,6 +25,8 @@ public:
 
     void updateMatrizes( void );
 
+    void setHeight( float new_height );
+
     void yawCamera( float d_yaw_f );
     void pitchCamera( float d_pitch_f );
 

@@ -19,10 +19,19 @@ Camera::Camera(glm::vec3 pos)
 }
 
 
+
+void Camera::setHeight( float new_height )
+{
+    
+    position.y = new_height;
+    updateMatrizes();
+}
+
+
 void Camera::strafeCamera(float sidewards )
 {
     position += right * moveSpeed * sidewards;
-    position.y = .5f;
+    // position.y = .5f;
     updateMatrizes();
 }
 
@@ -30,7 +39,7 @@ void Camera::strafeCamera(float sidewards )
 void Camera::pushCamera(float forward )
 {
     position += direction * moveSpeed * forward;
-    position.y = .5f;
+    // position.y = .5f;
     updateMatrizes();
 }
 

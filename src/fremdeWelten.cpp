@@ -27,17 +27,22 @@
 
 
 #include <Shader.hpp>
+#include <Model.h>
+
+// my camera
 #include <Camera.h>
-#include <Modell.h>
 
-
+// my Modell
+#include <myModel.h>
 
 
 Camera* camera;
 
 GLfloat lastX = 0.f;
 GLfloat lastY = 0.f;
+
 bool firstMouse = false;
+// bool fullscreen;
 
 
 static struct
@@ -48,10 +53,10 @@ public:
     float u, v;
 } vertices[4] =
 {
-    {  0.5f, 0.1f, 0.f,  0.f, 1.f, 0.f,  0.f,  1.f },
-    {  0.5f, 1.1f, 0.f,  0.f, 0.f, 1.f,  0.f,  0.f },
-    { -0.5f, 0.1f, 0.f,  1.f, 0.f, 0.f,  1.f,  1.f },
-    { -0.5f, 1.1f, 0.f,  0.f, 0.f, 1.f,  1.f, 0.0f }
+    {  0.5f, 0.6f, 0.f,  0.f, 1.f, 0.f,  0.f,  1.f },
+    {  0.5f, 1.6f, 0.f,  0.f, 0.f, 1.f,  0.f,  0.f },
+    { -0.5f, 0.6f, 0.f,  1.f, 0.f, 0.f,  1.f,  1.f },
+    { -0.5f, 1.6f, 0.f,  0.f, 0.f, 1.f,  1.f, 0.0f }
 };
 
 
@@ -128,6 +133,36 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     {
         camera->pitchCamera( 0.1f );
     }
+
+    else if (key == GLFW_KEY_R )
+        camera->setHeight( 1.5f );
+
+
+    // does not work as glfwSetWindowMonitor is not defined?!
+    // else if (key == GLFW_KEY_F )
+    // {
+    //     if (fullscreen)
+    //     {
+    //         glfwSetWindowMonitor(   window, // the glfw window were using
+    //                                 NULL,   // monitor to use, NONE for window mode
+    //                                 0,      // xpos,
+    //                                 0,      // ypos,
+    //                                 800,    // width,
+    //                                 600,    // height,
+    //                                 30 );    // refreshRate 
+    //     } 
+    //     else
+    //     {
+    //         glfwSetWindowMonitor(   window, // the glfw window were using
+    //                                 glfwGetPrimaryMonitor(),   // monitor
+    //                                 0,      // xpos,
+    //                                 0,      // ypos,
+    //                                 800,    // width,
+    //                                 600,    // height,
+    //                                 30 );    // refreshRate 
+    //     }
+    // }
+
 }
 
 
@@ -157,7 +192,13 @@ int main(void)
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    window = glfwCreateWindow(640, 480, "Fremde Welten", NULL, NULL);
+
+    // window mode
+    window = glfwCreateWindow(1920, 950, "Fremde Welten", NULL, NULL);
+    
+    // fullscreen mode due to glfwGetPrimaryMonitor()
+    // window = glfwCreateWindow(1920, 1080, "Fremde Welten", glfwGetPrimaryMonitor(), NULL);
+
     if (!window)
     {
         glfwTerminate();
@@ -208,9 +249,6 @@ int main(void)
 
     Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
 
-
-    Shader suzeShader( "../gfx/shaders/suzeShader.vert", "../gfx/shaders/suzeShader.frag" );
-    Model suzeModel("../gfx/assets/suze.obj");
 
     // GLuint vertex_shader, fragment_shader, program;
 
@@ -313,7 +351,7 @@ int main(void)
     // After we're done generating the texture and its corresponding mipmaps, 
     // it is good practice to free the image memory and unbind the texture object: 
     SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
 
     /////////////////////////////////
 
@@ -347,12 +385,24 @@ int main(void)
     //                     );
 
 
+
+
+    Shader suzeShader( "../gfx/shaders/suzeShader.vert", "../gfx/shaders/suzeShader.frag" );
+    Model suzeModel("../gfx/assets/wache_frame143.obj");
+
+
     
     const float* vp_array;
 
     // mat4x4 m, p, mvp;
     
     glm::mat4 m, p, mvp, v;
+
+
+
+    double elapsed = 0.0;
+    char title[100];
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -370,7 +420,7 @@ int main(void)
 
         // bad-evil immediate mode to draw grid:D
         glUseProgram(0);
-        float scale = 0.2f;
+        float scale = 1.f;
         int length = 10;
         glLoadMatrixf( vp_array );
         glColor3f(0.1f,0.1f,0.1f);
@@ -390,43 +440,41 @@ int main(void)
 
 
         // draw FIRE
-        // glUseProgram(program);
-
-        // glUniform1f(step_location, glfwGetTime()*45.f);
-        // glUniform1f(time_location, glfwGetTime());
-        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
-        
 
         vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
         
-        // glUseProgram(torchShader.programID);
         torchShader.use();
 
-        glUniform1f(glGetUniformLocation(torchShader.programID, "step"), glfwGetTime()*45.f);
-        glUniform1f(glGetUniformLocation(torchShader.programID, "time"), glfwGetTime());
+        glUniform1f(glGetUniformLocation(torchShader.programID, "step"), elapsed*45.f);
+        glUniform1f(glGetUniformLocation(torchShader.programID, "time"), elapsed);
 
-        
         // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
         glUniformMatrix4fv(glGetUniformLocation(torchShader.programID, "MVP"), 1, GL_FALSE, vp_array);
 
-        // ...call the amublances :D
-        // glUniform1f(fact_location, (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
+        // make it sparkling
         glUniform1f(glGetUniformLocation(torchShader.programID, "factor"), 
                     (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
         
+        
+
         glBindTexture(GL_TEXTURE_2D, texture);
-        // glBindVertexArray(VAO);
-        // glDrawElements(GL_TRIANGLES, 4, GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        // glBindVertexArray(0);
 
 
-
+        suzeShader.use();
+        glUniformMatrix4fv(glGetUniformLocation(suzeShader.programID, "MVP"), 1, GL_FALSE, vp_array);
         suzeModel.Draw(suzeShader);
 
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        sprintf(title, "Fremde Welten | FPS % 6.2f", 1.f/(glfwGetTime()-elapsed));
+
+        glfwSetWindowTitle(window, title);
+        elapsed = glfwGetTime();
+
+
     }
     glfwDestroyWindow(window);
     glfwTerminate();
