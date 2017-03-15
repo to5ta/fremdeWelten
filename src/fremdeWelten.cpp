@@ -423,8 +423,12 @@ int main(void)
 
     #define MYMODEL 1
     #if MYMODEL
+        // CModel* monkey = new CModel("../gfx/assets/sphere.obj");
         CModel* monkey = new CModel("../gfx/assets/monkey_with_chrown.obj");
     #endif
+
+
+    int frames = 0;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -498,7 +502,7 @@ int main(void)
         #endif
 
         #if MYMODEL 
-            monkey->updateMVP( mvp_array );
+            monkey->updateMVP( mvp_array, frames++ );
         #endif
 
         // std::cout << "MVP Monkey: " << monkey->MVP << std::endl;
