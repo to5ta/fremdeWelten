@@ -8,7 +8,7 @@ TARGET 	= $(BIN)fremdeWelten
 MODULES = $(OBJ)*.o
 INCLUDE = -I/usr/include/ -I. -Ideps
 CC 		= $(DEBUG) $(WARN)
-DEBUG 	=
+DEBUG 	= 
 LIBS 	= -lglfw -lGL -lSOIL -lassimp
 # LIBS = -lGL -lGLU -lglfw -lGLEW -glew32 -lopengl32
 
@@ -30,9 +30,13 @@ glad:
 	g++ $(CC) -c deps/glad.c $(INCLUDE) -o $(OBJ)glad.o
 
 
-
 run:
 	cd $(BIN) && ./fremdeWelten
+
+
+debug:
+	cd $(BIN) && gdb ./fremdeWelten
+
 
 %: 
 	# $(info ccache g++ -c $@.cpp -o $(OBJ)$@.o $(INCLUDE) )

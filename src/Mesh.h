@@ -54,7 +54,7 @@ public:
     }
 
     // Render the mesh
-    void Draw(Shader shader) 
+    void Draw(Shader shader)
     {
         // Bind appropriate textures
         GLuint diffuseNr = 1;
@@ -71,8 +71,10 @@ public:
             else if(name == "texture_specular")
                 ss << specularNr++; // Transfer GLuint to stream
             number = ss.str(); 
+
             // Now set the sampler to the correct texture unit
             glUniform1i(glGetUniformLocation(shader.programID, (name + number).c_str()), i);
+
             // And finally bind the texture
             glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
         }
@@ -84,6 +86,11 @@ public:
         // Draw mesh
         glBindVertexArray(this->VAO);
         glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+        
+        // wrong way!
+        // glDrawArrays(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+        // glDrawArrays(GL_TRIANGLES, 0, this->vertices.size() );
+
         glBindVertexArray(0);
 
         // Always good practice to set everything back to defaults once configured.
@@ -104,6 +111,7 @@ private:
     {
         // Create buffers/arrays
         glGenVertexArrays(1, &this->VAO);
+
         glGenBuffers(1, &this->VBO);
         glGenBuffers(1, &this->EBO);
 
@@ -115,9 +123,8 @@ private:
         // A great thing about structs is that their memory layout is sequential for all its items.
         // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
         // again translates to 3/2 floats which translates to a byte array.
-        
+        glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(Vertex), &this->vertices[0], GL_STATIC_DRAW);  
 
-        // glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(Vertex), &this->vertices[0], GL_STATIC_DRAW);  
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), &this->indices[0], GL_STATIC_DRAW);

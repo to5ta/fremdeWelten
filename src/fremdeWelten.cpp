@@ -38,6 +38,7 @@
 
 Camera* camera;
 
+
 GLfloat lastX = 0.f;
 GLfloat lastY = 0.f;
 
@@ -190,12 +191,16 @@ int main(void)
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+
+
 
     // window mode
     window = glfwCreateWindow(1920, 950, "Fremde Welten", NULL, NULL);
     
+
+
     // fullscreen mode due to glfwGetPrimaryMonitor()
     // window = glfwCreateWindow(1920, 1080, "Fremde Welten", glfwGetPrimaryMonitor(), NULL);
 
@@ -233,23 +238,69 @@ int main(void)
 
 
 
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
+
+    Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
+
+
     // NOTE: OpenGL error checks have been omitted for brevity
-    GLuint vertex_buffer;
+    GLuint vertex_buffer, vertex_array;
+    
+    glGenVertexArrays(1, &vertex_array );
+
+    glBindVertexArray( vertex_array );
+
     glGenBuffers(1, &vertex_buffer);
     printf("Vertex_Buffer=%i\n", vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+        // this seems to be a Buffer* thing
+    GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
+    GLint vcol_location = glGetAttribLocation(torchShader.programID, "vCol");
+    GLint uv_location = glGetAttribLocation(torchShader.programID, "vUV");
+    
+    // enable VertexAttributes, NON-oFF SHADER BUSSINESS
+    glEnableVertexAttribArray(vpos_location);
+    glVertexAttribPointer(  vpos_location, 
+                            3, 
+                            GL_FLOAT, 
+                            GL_FALSE,
+                            sizeof(GLfloat) * 8,    // stride!
+                            (GLvoid*) 0               // vermutlich Position im Buffer? siehe oben
+                        );
 
+    glEnableVertexAttribArray(vcol_location);
+    glVertexAttribPointer(  vcol_location,              // GLuint index                                    
+                            3,                          // GLint size                        
+                            GL_FLOAT,                   // GLenum type                                 
+                            GL_FALSE,                   // GLboolean normalized                                 
+                            sizeof(GLfloat) * 8,        // GLsizei stride                                        
+                            (GLvoid*) (sizeof(GLfloat) * 3) // const GLvoid * glVertexAttribPointer                                                 
+                        ); 
+
+    // printf("uv_location=%i\n", uv_location );
+    glEnableVertexAttribArray(uv_location);  
+    glVertexAttribPointer(  uv_location,    // index of attrib, Order or hw dependend
+                            2,              // number of elements per vert of that attribute 
+                            GL_FLOAT,       // 
+                            GL_FALSE,       // 
+                            8 * sizeof(GLfloat),            // stride, internal offset
+                            (GLvoid*)(6 * sizeof(GLfloat))  // offset in buffer for first element
+                        );
+
+    // glEnableVertexAttribArray(fact_location);
+
+    glBindVertexArray( 0 );
+
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
 
     // ////////////////////////////////
     // // actual shader creation
-
-    Shader torchShader( "../gfx/shaders/torch_sprite_ani.vert", "../gfx/shaders/torch_sprite_ani.frag" );
-
-
     // GLuint vertex_shader, fragment_shader, program;
 
     // vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -266,7 +317,6 @@ int main(void)
     // glLinkProgram(program);
 
     // //////////
-
     // // get location ("id/adress") access
     // GLint mvp_location = glGetUniformLocation(program, "MVP");
     // printf("mvp_location=%i\n", mvp_location );
@@ -291,31 +341,7 @@ int main(void)
 
     // // negative when failed?
     // // std::cout << fact_location << std::endl;
-
     /////////
-
-    GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
-    GLint vcol_location = glGetAttribLocation(torchShader.programID, "vCol");
-    
-    // enable VertexAttributes, NON-oFF SHADER BUSSINESS
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(  vpos_location, 
-                            3, 
-                            GL_FLOAT, 
-                            GL_FALSE,
-                            sizeof(GLfloat) * 8,    // stride!
-                            (GLvoid*) 0               // vermutlich Position im Buffer? siehe oben
-                        );
-
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(  vcol_location,              // GLuint index                                    
-                            3,                          // GLint size                        
-                            GL_FLOAT,                   // GLenum type                                 
-                            GL_FALSE,                   // GLboolean normalized                                 
-                            sizeof(GLfloat) * 8,        // GLsizei stride                                        
-                            (GLvoid*) (sizeof(GLfloat) * 3) // const GLvoid * glVertexAttribPointer                                                 
-                        );
-    // glEnableVertexAttribArray(fact_location);
     //////////////////////////////////
 
 
@@ -356,18 +382,6 @@ int main(void)
     /////////////////////////////////
 
 
-    GLint uv_location = glGetAttribLocation(torchShader.programID, "vUV");
-
-    printf("uv_location=%i\n", uv_location );
-
-    glEnableVertexAttribArray(uv_location);  
-    glVertexAttribPointer(  uv_location,    // index of attrib, Order or hw dependend
-                            2,              // number of elements per vert of that attribute 
-                            GL_FLOAT,       // 
-                            GL_FALSE,       // 
-                            8 * sizeof(GLfloat),            // stride, internal offset
-                            (GLvoid*)(6 * sizeof(GLfloat))  // offset in buffer for first element
-                        );
 
     //////////////////////////////////
 
@@ -385,14 +399,18 @@ int main(void)
     //                     );
 
 
+    #define SUZE 0
 
+    #if SUZE
+        // Shader suzeShader("../gfx/shaders/basicShader.vert", "../gfx/shaders/basicShader.frag" );
+        Shader suzeShader( "../gfx/shaders/suzeShader.vert", "../gfx/shaders/suzeShader.frag" );
+        Model suzeModel("../gfx/assets/wache_frame143.obj");
+        // Model suzeModel("../gfx/assets/monkey_with_chrown.obj");
+    #endif
 
-    Shader suzeShader( "../gfx/shaders/suzeShader.vert", "../gfx/shaders/suzeShader.frag" );
-    Model suzeModel("../gfx/assets/wache_frame143.obj");
-
-
+    Shader basicShader("../gfx/shaders/basicShader.vert", "../gfx/shaders/basicShader.frag" );
     
-    const float* vp_array;
+    const float* mvp_array;
 
     // mat4x4 m, p, mvp;
     
@@ -403,6 +421,10 @@ int main(void)
     double elapsed = 0.0;
     char title[100];
 
+    #define MYMODEL 1
+    #if MYMODEL
+        CModel* monkey = new CModel("../gfx/assets/monkey_with_chrown.obj");
+    #endif
 
     while (!glfwWindowShouldClose(window))
     {
@@ -416,13 +438,15 @@ int main(void)
         glClearColor(0.02f, 0.02f, 0.04f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
 
+        mvp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
+
 
 
         // bad-evil immediate mode to draw grid:D
         glUseProgram(0);
         float scale = 1.f;
         int length = 10;
-        glLoadMatrixf( vp_array );
+        glLoadMatrixf( mvp_array );
         glColor3f(0.1f,0.1f,0.1f);
         glBegin(GL_LINES);
             for(int i=-length; i<=length; i++)
@@ -440,31 +464,65 @@ int main(void)
 
 
         // draw FIRE
-
-        vp_array = glm::value_ptr( camera->getViewProjectionMatrix() );
         
+        #if 1 
+
+        glBindVertexArray( vertex_array );
+        // glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
         torchShader.use();
 
-        glUniform1f(glGetUniformLocation(torchShader.programID, "step"), elapsed*45.f);
-        glUniform1f(glGetUniformLocation(torchShader.programID, "time"), elapsed);
+        glUniform1f(glGetUniformLocation(torchShader.programID, "step"), elapsed*33.f);
 
-        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, vp_array );
-        glUniformMatrix4fv(glGetUniformLocation(torchShader.programID, "MVP"), 1, GL_FALSE, vp_array);
+        // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, mvp_array );
+        glUniformMatrix4fv(glGetUniformLocation(torchShader.programID, "MVP"), 1, GL_FALSE, mvp_array);
 
         // make it sparkling
         glUniform1f(glGetUniformLocation(torchShader.programID, "factor"), 
                     (1.f + sin(glfwGetTime()*15.33f)*sin(glfwGetTime()*7.777f))/3.f + 0.6f );
         
-        
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        // glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindVertexArray( 0 );
+
+        #endif
 
 
+
+        #if SUZE
         suzeShader.use();
-        glUniformMatrix4fv(glGetUniformLocation(suzeShader.programID, "MVP"), 1, GL_FALSE, vp_array);
+        glUniformMatrix4fv(glGetUniformLocation(suzeShader.programID, "MVP"), 1, GL_FALSE, mvp_array);
         suzeModel.Draw(suzeShader);
+        #endif
 
+        #if MYMODEL 
+            monkey->updateMVP( mvp_array );
+        #endif
+
+        // std::cout << "MVP Monkey: " << monkey->MVP << std::endl;
+        // std::cout << "MVP         : " << mvp_array << std::endl;
+        // printf("mvp:\n % 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[0], mvp_array[1], mvp_array[2], mvp_array[3] );
+        // printf("% 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[4], mvp_array[5], mvp_array[6], mvp_array[7] );
+        // printf("% 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[8], mvp_array[9], mvp_array[10], mvp_array[11] );
+        // printf("% 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[12], mvp_array[13], mvp_array[14], mvp_array[15] );
+        
+        #if MYMODEL
+            #if 0
+            // basicShader.use();
+            // glUniformMatrix4fv(glGetUniformLocation(basicShader.programID, "MVP"), 1, GL_FALSE, mvp_array);
+            
+            glUseProgram( monkey->meshes[1]->material->shader->programID );
+            glUniformMatrix4fv(glGetUniformLocation(monkey->meshes[1]->material->shader->programID, "MVP"), 1, GL_FALSE, mvp_array);
+
+            glBindVertexArray(monkey->meshes[1]->VAO);
+            glDrawArrays(GL_TRIANGLES, 0, monkey->meshes[1]->vertices.size() );
+            glBindVertexArray( 0 );
+            #else
+            monkey->draw( );
+            #endif
+        #endif
 
         glfwSwapBuffers(window);
         glfwPollEvents();
