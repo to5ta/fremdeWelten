@@ -258,9 +258,11 @@ int main(void)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
         // this seems to be a Buffer* thing
-    GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
     GLint vcol_location = glGetAttribLocation(torchShader.programID, "vCol");
-    GLint uv_location = glGetAttribLocation(torchShader.programID, "vUV");
+    GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
+    GLint uv_location   = glGetAttribLocation(torchShader.programID, "vUV");
+
+    // printf("IDs torchShader: %i %i %i\n", vpos_location, vcol_location, uv_location );
     
     // enable VertexAttributes, NON-oFF SHADER BUSSINESS
     glEnableVertexAttribArray(vpos_location);
@@ -399,7 +401,7 @@ int main(void)
     //                     );
 
 
-    #define SUZE 0
+    #define SUZE 1
 
     #if SUZE
         // Shader suzeShader("../gfx/shaders/basicShader.vert", "../gfx/shaders/basicShader.frag" );
@@ -424,7 +426,33 @@ int main(void)
     #define MYMODEL 1
     #if MYMODEL
         // CModel* monkey = new CModel("../gfx/assets/sphere.obj");
-        CModel* monkey = new CModel("../gfx/assets/monkey_with_chrown.obj");
+        // CModel* monkey = new CModel("../gfx/assets/can.obj");
+        // CModel* monkey = new CModel("../gfx/assets/monkey_with_chrown.obj");
+
+
+
+        vector<glm::vec3> allpos;
+        vector<glm::vec3> allnormals;
+        vector<glm::vec2> alluvs;
+        vector<triangle_t> allTris;
+
+        allpos.push_back( glm::vec3( -1,0, 0 ));
+        allpos.push_back( glm::vec3( -1,1, 0 ));
+        allpos.push_back( glm::vec3(  1,1, 0 ));
+        allpos.push_back( glm::vec3(  1,0, 0 ));
+
+        triangle_t tri1 = triangle_t {{0,1,2}, {0,0,0}, {0,0,0}};
+        triangle_t tri2 = triangle_t {{0,2,3}, {0,0,0}, {0,0,0}};
+
+        allTris.push_back( tri1 );
+        allTris.push_back( tri2);
+
+        CModel* monkey = new CModel( &allpos,
+                                     &allnormals,
+                                     &alluvs,
+                                     &allTris );
+
+
     #endif
 
 

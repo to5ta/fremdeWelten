@@ -142,6 +142,12 @@ public:
     int frames;
 
     CModel( string obj_path );
+
+    CModel( vector<glm::vec3>*  allpos, 
+            vector<glm::vec3>*  allnormals, 
+            vector<glm::vec2>*  allTexCoords,
+            vector<triangle_t>*  allTrisIDs );
+
     ~CModel();
 
     void draw( );
@@ -201,6 +207,8 @@ CMaterial::CMaterial( vector<string> mtl_description, CModel* parent )
 
 
     this->name = mtl_description[0].substr(7);
+
+    printf("New Material created: '%s'\n", this->name.c_str() );
     
     for(vector<string>::iterator line = mtl_description.begin(); line!= mtl_description.end(); line++ )
     {
@@ -213,8 +221,8 @@ CMaterial::CMaterial( vector<string> mtl_description, CModel* parent )
 
     // std::cout << "\"\"\"" << std::endl;
 
-    const GLchar* vertexPath = "../gfx/shaders/basicShader.vert";
-    const GLchar* fragmentPath = "../gfx/shaders/basicShader.frag";
+    const GLchar* vertexPath    = "../gfx/shaders/basicShader.vert";
+    const GLchar* fragmentPath  = "../gfx/shaders/basicShader.frag";
 
     this->shader = new Shader(vertexPath, fragmentPath);
 
@@ -262,9 +270,6 @@ void CMaterial::deactivate()
 
 
 
-
-
-
 CMesh::CMesh(   vector<glm::vec3>*  allpos, 
                 vector<glm::vec3>*  allnormals, 
                 vector<glm::vec2>*  allTexCoords,
@@ -272,6 +277,19 @@ CMesh::CMesh(   vector<glm::vec3>*  allpos,
                 CMaterial*          material )
 {
     this->material = material;
+
+
+    printf("Positions: %i\n", allpos->size() );
+    printf("Normals  : %i\n", allnormals->size() );
+    printf("TexCoords: %i\n", allTexCoords->size() );
+    printf("Triangles: %i\n", allTrisIDs->size() );
+
+    if(allTexCoords->size()<1)
+         allTexCoords->push_back( glm::vec2(0,0) );
+
+    if(allnormals->size()<1)
+         allnormals->push_back( glm::vec3(0,0,0) );
+
 
     for (vector<triangle_t>::iterator tri = allTrisIDs->begin(); tri != allTrisIDs->end(); ++tri)
     {   
@@ -289,7 +307,6 @@ CMesh::CMesh(   vector<glm::vec3>*  allpos,
 
     printf("New Mesh created: %i Triangles\n", vertices.size()/3 );
     printf("Used Material:   '%s'\n\n", this->material->name.c_str() );
-
 
     this->buffer();
  
@@ -319,10 +336,11 @@ void CMesh::buffer()
                   GL_STATIC_DRAW );                         // GLenum usage);
 
 
-    GLint position_ptr = glGetAttribLocation(this->material->shader->programID, "position");
-    GLint texCoords_ptr = glGetAttribLocation(this->material->shader->programID, "texCoords");
-    GLint normal_ptr = glGetAttribLocation(this->material->shader->programID, "normal");
+    GLint position_ptr  = glGetAttribLocation(this->material->shader->programID, "position");
+    GLint texCoords_ptr = glGetAttribLocation(this->material->shader->programID, "uv");
+    GLint normal_ptr    = glGetAttribLocation(this->material->shader->programID, "normal");
 
+    printf("Pos: %i UV: %i Normal: %i\n", position_ptr, texCoords_ptr, normal_ptr);
 
      // Set the vertex attribute pointers
     // Vertex Positions
@@ -381,7 +399,16 @@ void CMesh::draw( )
 
     // glBindVertexArray(this->VBO );
     // ?? glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
-    // printf("Drawing Arrays...\n");
+    printf("Drawing Arrays...\n");
+
+    for(vector<vertex_t>::iterator vert= vertices.begin(); vert!= vertices.end(); vert++)
+    {
+        if( int(vert - vertices.begin())%3==0)
+            printf("\n");
+
+        printf("Vertex: %f %f %f\n", vert->position[0], vert->position[1], vert->position[2] );
+    }
+
 
 
     glDrawArrays(GL_TRIANGLES, 0, this->vertices.size() );
@@ -465,10 +492,10 @@ void CModel::parseMTL( string mtl_path )
             lines_buffer.push_back(line);
         }
 
-        printf("Buffered Name: %s\n", buffered_name.c_str());
+        // printf("Buffered Name: %s\n", buffered_name.c_str());
         // create also last material
         materials[buffered_name] = new CMaterial(lines_buffer, this );
-        printf("MATERIAL last %s: %x\n", buffered_name.c_str(), materials[buffered_name] );
+        // printf("MATERIAL last %s: %x\n", buffered_name.c_str(), materials[buffered_name] );
     }
 
 }
@@ -492,6 +519,7 @@ void CModel::parseOBJ( string obj_path )
     // make sure mtl is already parsed
     // if no mtl was available create generic material + shader 
 
+    printf("Begin Parsing Obj..\n");
     
     ifstream modellfile( obj_path.c_str() );
     string line;
@@ -522,7 +550,6 @@ void CModel::parseOBJ( string obj_path )
         {
             continue;
         }
-
 
 
         // new object announced
@@ -676,6 +703,7 @@ void CModel::parseOBJ( string obj_path )
                                             current_material ));
         }            
     }
+    printf(" obj parsing done!\n");
 }
 
 
@@ -702,13 +730,37 @@ CModel::CModel( string obj_path )
     parseOBJ( obj_path );
 
     printf("Meshes loaded:     %i\n", meshes.size());
-
     printf("Materials loaded:  %i\n", materials.size());
 
-
-    printf("\n\tLoading done\n\n");
+    printf("\n\tLoading done!\n\n");
 
 }
+
+
+
+
+CModel::CModel( vector<glm::vec3>*  allpos, 
+                vector<glm::vec3>*  allnormals, 
+                vector<glm::vec2>*  allTexCoords,
+                vector<triangle_t>*  allTrisIDs )
+{
+    frames = 0;
+
+    printf("Individual Model, single Mesh, basicShader:\n");
+
+    vector<string> cap;
+    cap.push_back("usemtl none");
+    CMaterial* current_material = new CMaterial(cap, this );
+
+    meshes.push_back( new CMesh(    allpos,
+                                    allnormals,
+                                    allTexCoords,
+                                    allTrisIDs,
+                                    current_material ));
+
+}
+
+
 
 CModel::~CModel()
 {
