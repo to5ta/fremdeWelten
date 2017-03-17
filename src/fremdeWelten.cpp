@@ -238,7 +238,6 @@ int main(void)
 
 
 
-
     std::cout << glGetString(GL_VERSION) << std::endl;
 
 
@@ -257,7 +256,7 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        // this seems to be a Buffer* thing
+    // this seems to be a Buffer* thing
     GLint vcol_location = glGetAttribLocation(torchShader.programID, "vCol");
     GLint vpos_location = glGetAttribLocation(torchShader.programID, "vPos");
     GLint uv_location   = glGetAttribLocation(torchShader.programID, "vUV");
@@ -401,7 +400,7 @@ int main(void)
     //                     );
 
 
-    #define SUZE 1
+    #define SUZE 0
 
     #if SUZE
         // Shader suzeShader("../gfx/shaders/basicShader.vert", "../gfx/shaders/basicShader.frag" );
@@ -425,10 +424,14 @@ int main(void)
 
     #define MYMODEL 1
     #if MYMODEL
+
+        #if 1
         // CModel* monkey = new CModel("../gfx/assets/sphere.obj");
         // CModel* monkey = new CModel("../gfx/assets/can.obj");
-        // CModel* monkey = new CModel("../gfx/assets/monkey_with_chrown.obj");
-
+        // CModel* monkey = new CModel("../gfx/assets/money_with_chrown.obj");
+        CModel* monkey = new CModel("../gfx/assets/money_with_chrown.obj");
+        // CModel* monkey = new CModel("../gfx/assets/pyr.obj");
+        #else
 
 
         vector<glm::vec3> allpos;
@@ -436,10 +439,10 @@ int main(void)
         vector<glm::vec2> alluvs;
         vector<triangle_t> allTris;
 
-        allpos.push_back( glm::vec3( -1,0, 0 ));
-        allpos.push_back( glm::vec3( -1,1, 0 ));
-        allpos.push_back( glm::vec3(  1,1, 0 ));
-        allpos.push_back( glm::vec3(  1,0, 0 ));
+        allpos.push_back( glm::vec3( -1,0, -0.1 ));
+        allpos.push_back( glm::vec3( -1,1, -0.1 ));
+        allpos.push_back( glm::vec3(  1,1, -0.1 ));
+        allpos.push_back( glm::vec3(  1,0, -0.1 ));
 
         triangle_t tri1 = triangle_t {{0,1,2}, {0,0,0}, {0,0,0}};
         triangle_t tri2 = triangle_t {{0,2,3}, {0,0,0}, {0,0,0}};
@@ -452,7 +455,7 @@ int main(void)
                                      &alluvs,
                                      &allTris );
 
-
+        #endif
     #endif
 
 
@@ -534,7 +537,7 @@ int main(void)
         #endif
 
         // std::cout << "MVP Monkey: " << monkey->MVP << std::endl;
-        // std::cout << "MVP         : " << mvp_array << std::endl;
+        // std::cout << "MVP       : " << mvp_array << std::endl;
         // printf("mvp:\n % 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[0], mvp_array[1], mvp_array[2], mvp_array[3] );
         // printf("% 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[4], mvp_array[5], mvp_array[6], mvp_array[7] );
         // printf("% 4.1f % 4.1f % 4.1f % 4.1f\n", mvp_array[8], mvp_array[9], mvp_array[10], mvp_array[11] );
@@ -545,11 +548,12 @@ int main(void)
             // basicShader.use();
             // glUniformMatrix4fv(glGetUniformLocation(basicShader.programID, "MVP"), 1, GL_FALSE, mvp_array);
             
-            glUseProgram( monkey->meshes[1]->material->shader->programID );
-            glUniformMatrix4fv(glGetUniformLocation(monkey->meshes[1]->material->shader->programID, "MVP"), 1, GL_FALSE, mvp_array);
+            // glUseProgram( monkey->meshes[0]->material->shader->programID );
+            monkey->meshes[0]->material->shader->use();
+            glUniformMatrix4fv(glGetUniformLocation(monkey->meshes[0]->material->shader->programID, "MVP"), 1, GL_FALSE, mvp_array);
 
-            glBindVertexArray(monkey->meshes[1]->VAO);
-            glDrawArrays(GL_TRIANGLES, 0, monkey->meshes[1]->vertices.size() );
+            glBindVertexArray(monkey->meshes[0]->VAO);
+            glDrawArrays(GL_TRIANGLES, 0, monkey->meshes[0]->vertices.size() );
             glBindVertexArray( 0 );
             #else
             monkey->draw( );
